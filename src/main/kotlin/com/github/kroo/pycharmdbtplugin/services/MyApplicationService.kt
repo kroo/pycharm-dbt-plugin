@@ -1,6 +1,6 @@
-package org.jetbrains.plugins.template.services
+package com.github.kroo.pycharmdbtplugin.services
 
-import org.jetbrains.plugins.template.MyBundle
+import com.github.kroo.pycharmdbtplugin.MyBundle
 
 class MyApplicationService {
 
