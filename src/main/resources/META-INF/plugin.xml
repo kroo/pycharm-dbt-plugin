@@ -1,19 +1,28 @@
 <idea-plugin>
-    <id>org.jetbrains.plugins.template</id>
-    <name>Template</name>
-    <vendor>JetBrains</vendor>
+    <id>com.getaround.pycharm.dbt</id>
+    <name>DBT</name>
+    <vendor>Getaround</vendor>
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.python</depends>
+    <depends>com.intellij.modules.pycharm.professional</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="org.jetbrains.plugins.template.services.MyApplicationService"/>
-        <projectService serviceImplementation="org.jetbrains.plugins.template.services.MyProjectService"/>
+        <applicationService serviceImplementation="com.getaround.pycharm.dbt.DbtApplicationService"/>
+        <projectService serviceImplementation="com.getaround.pycharm.dbt.services.DbtProjectService"/>
+
+        <moduleService serviceImplementation="com.getaround.pycharm.dbt.services.DbtModuleService" id="DBT_MODULE" />
+        <moduleType id="DBT_MODULE" implementationClass="com.getaround.pycharm.dbt.DbtModuleType"/>
+
+        <!--suppress PluginXmlValidity -->
+        <annotator language="Jinja2" implementationClass="com.getaround.pycharm.dbt.annotators.RefAnnotator"/>
+        <psi.referenceContributor implementation="com.getaround.pycharm.dbt.DbtReferenceContributor"/>
     </extensions>
 
     <projectListeners>
-        <listener class="org.jetbrains.plugins.template.listeners.MyProjectManagerListener"
+        <listener class="com.getaround.pycharm.dbt.listeners.DbtProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </projectListeners>
 </idea-plugin>
