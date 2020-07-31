@@ -56,6 +56,7 @@ intellij {
 //
     setPlugins(
             "python",
+            "yaml",
             "com.intellij.database")
 //  setPlugins("java")
 }

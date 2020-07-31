@@ -19,11 +19,34 @@ class DbtReferenceContributor : PsiReferenceContributor() {
 
                         val functionCall: Jinja2FunctionCall = element.parent as Jinja2FunctionCall
                         val callee: DjangoVariableReferenceImpl = functionCall.callee as DjangoVariableReferenceImpl
-                        val refVal: DjangoStringLiteralImpl? = PsiTreeUtil.findChildOfType<DjangoStringLiteralImpl>(functionCall, DjangoStringLiteralImpl::class.java)
 
-                        if (callee.name == "ref" && refVal != null) {
-                            return arrayOf(DbtRefReference(refVal, refVal.stringValueTextRange))
+                        if (callee.name == "ref") {
+                            val refVal: DjangoStringLiteralImpl? = PsiTreeUtil.findChildOfType<DjangoStringLiteralImpl>(functionCall, DjangoStringLiteralImpl::class.java)
+                            if (refVal != null)
+                                return arrayOf(DbtRefReference(refVal, refVal.stringValueTextRange))
                         }
+
+                        if (callee.name == "source") {
+                            val args = PsiTreeUtil.findChildrenOfType<DjangoStringLiteralImpl>(functionCall, DjangoStringLiteralImpl::class.java).toList()
+                            if (args.size == 2) {
+                                val sourceName = args[0]
+                                val tableName = args[1]
+
+                                return if (element == sourceName) {
+                                    arrayOf(DbtSourceSchemaReference(
+                                            element, (element as DjangoStringLiteralImpl).stringValueTextRange))
+                                } else {
+                                    arrayOf(DbtSourceTableReference(
+                                            element, (element as DjangoStringLiteralImpl).stringValueTextRange,
+                                            sourceName, sourceName.stringValueTextRange,
+                                            tableName, tableName.stringValueTextRange))
+                                }
+                            } else if (args.size == 1) {
+                                return arrayOf(DbtSourceSchemaReference(
+                                        element, (element as DjangoStringLiteralImpl).stringValueTextRange))
+                            }
+                        }
+
                         return PsiReference.EMPTY_ARRAY
                     }
                 })
