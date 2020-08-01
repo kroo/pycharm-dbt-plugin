@@ -11,7 +11,9 @@ object DbtJinja2FunctionParameterUtil {
      */
     fun selectedParameterIndex(elem: PsiElement?, functionCall: Jinja2FunctionCall): Int? {
         var elementAtContext = elem
-        while (elementAtContext != null && elementAtContext.parent != null && elementAtContext.parent !is Jinja2FunctionCall)
+        while (elementAtContext != null &&
+                elementAtContext.parent != null &&
+                elementAtContext.parent !is Jinja2FunctionCall)
             elementAtContext = elementAtContext.parent
         if (elementAtContext == null) return null
 
@@ -20,8 +22,9 @@ object DbtJinja2FunctionParameterUtil {
             if (child == elementAtContext) {
                 break
             }
-            if (child != functionCall.callee)
+            if (child != functionCall.callee) {
                 currentParam++
+            }
         }
 
         return currentParam

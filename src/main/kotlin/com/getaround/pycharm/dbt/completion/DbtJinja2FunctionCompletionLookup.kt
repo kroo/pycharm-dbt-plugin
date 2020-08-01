@@ -1,6 +1,5 @@
 package com.getaround.pycharm.dbt.completion
 
-
 import com.getaround.pycharm.dbt.DbtJinja2Function
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.InsertionContext
@@ -9,9 +8,9 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.icons.AllIcons
 
 class DbtJinja2FunctionCompletionLookup(
-        private val function: DbtJinja2Function,
-        private val appendParens: Boolean,
-        private val autoPopup: Boolean
+    private val function: DbtJinja2Function,
+    private val appendParens: Boolean,
+    private val autoPopup: Boolean
 ) : LookupElement() {
     override fun getLookupString(): String {
         return function.name

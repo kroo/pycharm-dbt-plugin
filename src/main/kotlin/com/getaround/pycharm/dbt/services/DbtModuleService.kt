@@ -8,7 +8,7 @@ class DbtModuleService(private val module: Module) {
     fun findReferences(refName: String): Array<PsiFile> {
         val moduleScope = module.getModuleScope(false)
         val filesByName = FilenameIndex.getFilesByName(module.project, "$refName.sql", moduleScope)
-        println("getFilesByName(${refName}.sql, $moduleScope) -> $filesByName")
+        println("getFilesByName($refName.sql, $moduleScope) -> $filesByName")
         return filesByName
     }
 

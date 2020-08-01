@@ -7,13 +7,13 @@ internal class DbtProjectManagerListener : ProjectManagerListener {
 
     override fun projectOpened(project: Project) {
 //        val mmgr = ModuleManager.getInstance(project)
-
 //        val projScope = ProjectScope.getProjectScope(project)
 //        val moduleFiles = FilenameIndex.getFilesByName(project, "dbt_project.yml", projScope)
 //        for (moduleFile in moduleFiles) {
 //            val dbtModule = DbtModule(moduleFile)
 //            val modifiableModel = mmgr.modifiableModel
-//            val module = modifiableModel.newNonPersistentModule(dbtModule.containingDirectory().name, DbtModuleType.DBT_MODULE)
+//            val module = modifiableModel.newNonPersistentModule(
+//                    dbtModule.containingDirectory().name, DbtModuleType.DBT_MODULE)
 //            ApplicationManager.getApplication().runWriteAction {
 //                modifiableModel.commit()
 //            }

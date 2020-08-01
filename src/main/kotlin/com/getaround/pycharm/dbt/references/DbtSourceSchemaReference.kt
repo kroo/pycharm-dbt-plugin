@@ -7,9 +7,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 
-
 class DbtSourceSchemaReference(
-        element: PsiElement, textRange: TextRange) : PsiReferenceBase<PsiElement>(element, textRange) {
+    element: PsiElement,
+    textRange: TextRange
+) : PsiReferenceBase<PsiElement>(element, textRange) {
     private val sourceName = element.text.substring(textRange.startOffset, textRange.endOffset)
     private val projectService = element.project.service<DbtProjectService>()
 

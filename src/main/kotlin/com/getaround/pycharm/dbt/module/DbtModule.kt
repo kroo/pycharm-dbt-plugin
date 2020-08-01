@@ -12,10 +12,6 @@ import org.jetbrains.yaml.psi.impl.YAMLFileImpl
 import org.yaml.snakeyaml.Yaml
 
 class DbtModule(val projectYmlFile: PsiFile) {
-    init {
-
-    }
-
     override fun toString(): String {
         return "DbtModule(${containingDirectory.name})"
     }
@@ -43,7 +39,8 @@ class DbtModule(val projectYmlFile: PsiFile) {
     private val allSchemaFiles: List<DbtSchemaFile>
         get() {
             PsiManager.getInstance(projectYmlFile.project)
-            val allSchemaFiles = FilenameIndex.getFilesByName(projectYmlFile.project, "schema.yml", GlobalSearchScope.projectScope(projectYmlFile.project))
+            val allSchemaFiles = FilenameIndex.getFilesByName(
+                    projectYmlFile.project, "schema.yml", GlobalSearchScope.projectScope(projectYmlFile.project))
             return allSchemaFiles
                     .filter { psiFile -> isChildOf(containingDirectory, psiFile) && psiFile is YAMLFileImpl }
                     .map { psiFile -> DbtSchemaFile(psiFile as YAMLFileImpl) }
@@ -103,7 +100,6 @@ class DbtModule(val projectYmlFile: PsiFile) {
         return allTables
     }
 
-
     /**
      * Find a dbt source inside this dbt project module.
      *
@@ -134,7 +130,6 @@ class DbtModule(val projectYmlFile: PsiFile) {
         }
         return allSources
     }
-
 
     private fun isChildOf(directory: PsiDirectory, file: PsiFile): Boolean {
         var parent = file.parent

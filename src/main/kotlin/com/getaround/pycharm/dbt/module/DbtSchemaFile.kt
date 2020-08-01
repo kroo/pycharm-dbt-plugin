@@ -1,8 +1,13 @@
 package com.getaround.pycharm.dbt.module
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.yaml.psi.YAMLKeyValue
 import org.jetbrains.yaml.psi.YAMLSequenceItem
-import org.jetbrains.yaml.psi.impl.*
+import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl
+import org.jetbrains.yaml.psi.impl.YAMLDocumentImpl
+import org.jetbrains.yaml.psi.impl.YAMLFileImpl
+import org.jetbrains.yaml.psi.impl.YAMLPlainTextImpl
+import org.jetbrains.yaml.psi.impl.YAMLSequenceImpl
 
 class DbtSchemaFile(private val schemaFile: YAMLFileImpl) {
     private val document: YAMLDocumentImpl?
@@ -26,7 +31,7 @@ class DbtSchemaFile(private val schemaFile: YAMLFileImpl) {
             return sources.value as YAMLSequenceImpl
         }
 
-    fun getAllSources() : Collection<YAMLSequenceItem> {
+    fun getAllSources(): Collection<YAMLSequenceItem> {
         val allSources = ArrayList<YAMLSequenceItem>()
         val items = sources?.items ?: return allSources
         for (source in items) {
@@ -40,7 +45,7 @@ class DbtSchemaFile(private val schemaFile: YAMLFileImpl) {
     }
 
     fun getSource(sourceName: String): YAMLSequenceItem? {
-        val items = sources?.items ?: return null
+        val items = sources?.items ?: listOf()
         for (source in items) {
             for (keyValue in source.keysValues) {
                 if (keyValue.keyText == "name" && keyValue.valueText == sourceName) {
@@ -51,41 +56,44 @@ class DbtSchemaFile(private val schemaFile: YAMLFileImpl) {
         return null
     }
 
-    fun getAllSourceTables(sourceName: String) : Collection<YAMLPlainTextImpl> {
+    fun getAllSourceTables(sourceName: String): Collection<YAMLPlainTextImpl> {
         val allSources = ArrayList<YAMLPlainTextImpl>()
-        val source = getSource(sourceName) ?: return allSources
-        for (keyValue in source.keysValues) {
-            if (keyValue.keyText == "tables") {
-                val tables = keyValue.value ?: continue
-                if (tables !is YAMLSequenceImpl) continue
-                val tableItems = tables.items
-                for (tableItem in tableItems) {
-                    for (tableItemKeyValue in tableItem.keysValues) {
-                        if (tableItemKeyValue.keyText == "name" && tableItemKeyValue.value is YAMLPlainTextImpl) {
-                            allSources.add(tableItemKeyValue.value as YAMLPlainTextImpl)
-                        }
-                    }
-                }
+        forAllSourceTableKeyValues(sourceName) { kv ->
+            if (kv.keyText == "name" && kv.value is YAMLPlainTextImpl) {
+                allSources.add(kv.value as YAMLPlainTextImpl)
             }
+
+            true
         }
         return allSources
     }
-    fun getSourceTable(sourceName: String, tableName: String) : PsiElement? {
-        val source = getSource(sourceName) ?: return null
-        for (keyValue in source.keysValues) {
-            if (keyValue.keyText == "tables") {
-                val tables = keyValue.value ?: return null
-                if (tables !is YAMLSequenceImpl) return null
-                val tableItems = tables.items
-                for (tableItem in tableItems) {
-                    for (tableItemKeyValue in tableItem.keysValues) {
-                        if (tableItemKeyValue.keyText == "name" && tableItemKeyValue.valueText == tableName) {
-                            return tableItemKeyValue.value
-                        }
-                    }
+
+    fun getSourceTable(sourceName: String, tableName: String): PsiElement? {
+        var result: PsiElement? = null
+        forAllSourceTableKeyValues(sourceName) { kv ->
+            if (kv.keyText == "name" && kv.valueText == tableName) {
+                result = kv.value
+                false
+            } else true
+        }
+        return result
+    }
+
+    /**
+     * Helper function to iterate over all yaml table k/v items for a given source name
+     */
+    private fun forAllSourceTableKeyValues(sourceName: String, kvProcessor: (YAMLKeyValue) -> Boolean) {
+        val sourceKeysVals = getSource(sourceName)?.keysValues ?: listOf()
+        for (keyValue in sourceKeysVals) {
+            if (keyValue.keyText != "tables" || keyValue.value !is YAMLSequenceImpl) continue
+            val tableItems = (keyValue.value as YAMLSequenceImpl).items
+            for (tableItem in tableItems) {
+                var continueIterating = true
+                for (tableItemKeyValue in tableItem.keysValues) {
+                    continueIterating = continueIterating && kvProcessor(tableItemKeyValue)
                 }
+                if (!continueIterating) return
             }
         }
-        return null
     }
 }

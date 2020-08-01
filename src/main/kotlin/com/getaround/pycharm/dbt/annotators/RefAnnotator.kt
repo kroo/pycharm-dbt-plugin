@@ -15,7 +15,8 @@ class RefAnnotator : Annotator {
 
         val functionCall: Jinja2FunctionCall = element
         val callee: DjangoVariableReferenceImpl = functionCall.callee as DjangoVariableReferenceImpl
-        val refVal: DjangoStringLiteralImpl? = PsiTreeUtil.findChildOfType<DjangoStringLiteralImpl>(functionCall, DjangoStringLiteralImpl::class.java)
+        val refVal: DjangoStringLiteralImpl? = PsiTreeUtil.findChildOfType<DjangoStringLiteralImpl>(
+                functionCall, DjangoStringLiteralImpl::class.java)
 
         if (callee.name == "ref" && refVal != null) {
             holder

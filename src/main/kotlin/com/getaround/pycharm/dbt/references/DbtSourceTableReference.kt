@@ -7,11 +7,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 
-
 class DbtSourceTableReference(
-        element: PsiElement, textRange: TextRange,
-        sourceElement: PsiElement, sourceTextRange: TextRange,
-        tableElement: PsiElement, tableTextRange: TextRange) : PsiReferenceBase<PsiElement>(element, textRange) {
+    element: PsiElement,
+    textRange: TextRange,
+    sourceElement: PsiElement,
+    sourceTextRange: TextRange,
+    tableElement: PsiElement,
+    tableTextRange: TextRange
+) : PsiReferenceBase<PsiElement>(element, textRange) {
     private val sourceName = sourceElement.text.substring(sourceTextRange.startOffset, sourceTextRange.endOffset)
     private val tableName = tableElement.text.substring(tableTextRange.startOffset, tableTextRange.endOffset)
     private val projectService = sourceElement.project.service<DbtProjectService>()
@@ -30,6 +33,4 @@ class DbtSourceTableReference(
                 ?.toTypedArray()
                 ?: arrayOf()
     }
-
-
 }
