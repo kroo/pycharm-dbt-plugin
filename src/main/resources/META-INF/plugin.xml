@@ -1,3 +1,4 @@
+<!--suppress PluginXmlValidity -->
 <idea-plugin>
     <id>com.getaround.pycharm.dbt</id>
     <name>DBT</name>
@@ -10,16 +11,20 @@
     <depends>org.jetbrains.plugins.yaml</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.getaround.pycharm.dbt.DbtApplicationService"/>
+        <applicationService serviceImplementation="com.getaround.pycharm.dbt.services.DbtApplicationService"/>
         <projectService serviceImplementation="com.getaround.pycharm.dbt.services.DbtProjectService"/>
 
-        <moduleService serviceImplementation="com.getaround.pycharm.dbt.services.DbtModuleService" id="DBT_MODULE" />
-        <moduleType id="DBT_MODULE" implementationClass="com.getaround.pycharm.dbt.DbtModuleType"/>
+        <!--        <moduleService serviceImplementation="com.getaround.pycharm.dbt.services.DbtModuleService" id="DBT_MODULE" />-->
+        <!--        <moduleType id="DBT_MODULE" implementationClass="com.getaround.pycharm.dbt.module.DbtModuleType"/>-->
 
-        <!--suppress PluginXmlValidity -->
         <annotator language="Jinja2" implementationClass="com.getaround.pycharm.dbt.annotators.RefAnnotator"/>
-        <psi.referenceContributor implementation="com.getaround.pycharm.dbt.DbtReferenceContributor"/>
+        <psi.referenceContributor implementation="com.getaround.pycharm.dbt.references.DbtReferenceContributor"/>
+        <completion.contributor language="DjangoTemplate"
+                                implementationClass="com.getaround.pycharm.dbt.completion.DbtJinja2CompletionContributor"/>
+        <codeInsight.parameterInfo language="DjangoTemplate"
+                                   implementationClass="com.getaround.pycharm.dbt.completion.DbtJinja2FunctionParameterInfoHandler"/>
     </extensions>
+
 
     <projectListeners>
         <listener class="com.getaround.pycharm.dbt.listeners.DbtProjectManagerListener"

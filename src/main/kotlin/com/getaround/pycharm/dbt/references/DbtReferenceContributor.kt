@@ -1,4 +1,4 @@
-package com.getaround.pycharm.dbt
+package com.getaround.pycharm.dbt.references
 
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.*

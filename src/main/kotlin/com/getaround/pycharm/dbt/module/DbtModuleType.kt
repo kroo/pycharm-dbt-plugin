@@ -1,4 +1,4 @@
-package com.getaround.pycharm.dbt
+package com.getaround.pycharm.dbt.module
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.module.ModuleType

@@ -1,30 +1,30 @@
-package com.getaround.pycharm.dbt
+package com.getaround.pycharm.dbt.references
 
+import com.getaround.pycharm.dbt.completion.DbtModelCompletionLookup
 import com.getaround.pycharm.dbt.services.DbtProjectService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
-import com.jetbrains.django.completion.DjangoItemCompletionLookup
 
 
-class DbtSourceSchemaReference(
-        element: PsiElement, textRange: TextRange) : PsiReferenceBase<PsiElement>(element, textRange) {
-    private val sourceName = element.text.substring(textRange.startOffset, textRange.endOffset)
+class DbtRefReference(element: PsiElement, textRange: TextRange) : PsiReferenceBase<PsiElement>(element, textRange) {
+    private val refName = element.text.substring(textRange.startOffset, textRange.endOffset)
     private val projectService = element.project.service<DbtProjectService>()
 
     override fun resolve(): PsiElement? {
         return projectService
                 .findDbtProjectModule(element.containingFile)
-                ?.findSourceSchema(sourceName)
+                ?.findModel(refName)
     }
 
-    override fun getVariants(): Array<DjangoItemCompletionLookup> {
+    override fun getVariants(): Array<DbtModelCompletionLookup> {
         return projectService
                 .findDbtProjectModule(element.containingFile)
-                ?.findAllSourceSchemas()
-                ?.map { DjangoItemCompletionLookup(it) }
+                ?.findAllModels()
+                ?.map { DbtModelCompletionLookup(it) }
                 ?.toTypedArray()
                 ?: arrayOf()
     }
 }
+

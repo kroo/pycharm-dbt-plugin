@@ -1,4 +1,6 @@
-package com.getaround.pycharm.dbt
+package com.getaround.pycharm.dbt.services
+
+import com.getaround.pycharm.dbt.DbtPluginBundle
 
 class DbtApplicationService {
 

@@ -1,5 +1,6 @@
 package com.getaround.pycharm.dbt.module
 
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -30,6 +31,15 @@ class DbtModule(val projectYmlFile: PsiFile) {
             return obj?.get("name") as String?
         }
 
+    private val sourcePaths: Collection<VirtualFile>
+        get() {
+            val obj = this.asMap
+            if (obj?.get("source-paths") !is List<*>) return arrayListOf()
+            val sourcePaths = obj["source-paths"] as List<*>
+
+            return sourcePaths.mapNotNull { containingDirectory.findSubdirectory(it as String)?.virtualFile }
+        }
+
     private val allSchemaFiles: List<DbtSchemaFile>
         get() {
             PsiManager.getInstance(projectYmlFile.project)
@@ -50,8 +60,20 @@ class DbtModule(val projectYmlFile: PsiFile) {
      * @param name: the name of the model to find in this project, excluding the .sql extension!
      */
     fun findModel(name: String): PsiFile? {
-        val nestedFile = findChildRecursively(containingDirectory.virtualFile, "$name.sql") ?: return null
-        return PsiManager.getInstance(projectYmlFile.project).findFile(nestedFile)
+        val results = findAllModels().filter { it.name == "$name.sql" }
+
+        if (results.isEmpty()) return null
+        return results[0]
+    }
+
+    fun findAllModels(): List<PsiFile> {
+        return FilenameIndex
+                .getAllFilesByExt(projectYmlFile.project, "sql")
+                .filter { sqlFile ->
+                    sourcePaths.any { sourcePath ->
+                        VfsUtilCore.isAncestor(sourcePath, sqlFile, false)
+                    }
+                }.mapNotNull { PsiManager.getInstance(projectYmlFile.project).findFile(it) }
     }
 
     /**
@@ -113,23 +135,6 @@ class DbtModule(val projectYmlFile: PsiFile) {
         return allSources
     }
 
-
-    /**
-     * Recurse through the specified directory, looking for the first instance of the name
-     */
-    private fun findChildRecursively(directory: VirtualFile, name: String): VirtualFile? {
-        var result: VirtualFile? = directory.findChild(name)
-        if (result != null) return result
-
-        for (child in directory.children) {
-            if (child.isDirectory) {
-                result = findChildRecursively(child, name)
-                if (result != null) return result
-            }
-        }
-
-        return null
-    }
 
     private fun isChildOf(directory: PsiDirectory, file: PsiFile): Boolean {
         var parent = file.parent

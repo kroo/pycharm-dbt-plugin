@@ -1,11 +1,11 @@
-package com.getaround.pycharm.dbt
+package com.getaround.pycharm.dbt.references
 
+import com.getaround.pycharm.dbt.completion.DbtSourceTableCompletionLookup
 import com.getaround.pycharm.dbt.services.DbtProjectService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
-import com.jetbrains.django.completion.DjangoItemCompletionLookup
 
 
 class DbtSourceTableReference(
@@ -22,11 +22,11 @@ class DbtSourceTableReference(
                 ?.findSourceTable(sourceName, tableName)
     }
 
-    override fun getVariants(): Array<DjangoItemCompletionLookup> {
+    override fun getVariants(): Array<DbtSourceTableCompletionLookup> {
         return projectService
                 .findDbtProjectModule(element.containingFile)
                 ?.findAllSourceTables(sourceName)
-                ?.map { DjangoItemCompletionLookup(it) }
+                ?.map { DbtSourceTableCompletionLookup(it) }
                 ?.toTypedArray()
                 ?: arrayOf()
     }
