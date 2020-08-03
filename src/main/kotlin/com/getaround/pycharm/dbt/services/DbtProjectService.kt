@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import kotlin.test.assertEquals
 
 class DbtProjectService(val project: Project) {
@@ -15,8 +17,17 @@ class DbtProjectService(val project: Project) {
         println(DbtPluginBundle.message("projectService", project.name))
     }
 
+    fun findAllDbtModules(): List<DbtModule> {
+        return FilenameIndex
+                .getFilesByName(project, DBT_PROJECT_FILENAME,
+                        GlobalSearchScope.projectScope(project))
+                .mapNotNull {
+                    dbtModuleForProjectFile(it.virtualFile)
+                }
+    }
+
     private fun dbtModuleForProjectFile(dbtProjectFile: VirtualFile): DbtModule? {
-        assertEquals("dbt_project.yml", dbtProjectFile.name)
+        assertEquals(DBT_PROJECT_FILENAME, dbtProjectFile.name)
 
         var module = modules[dbtProjectFile.canonicalFile]
         if (module != null) {
@@ -35,7 +46,7 @@ class DbtProjectService(val project: Project) {
      * Look up the containing dbt project module for a particular file
      */
     private fun findDbtProjectModule(file: VirtualFile): DbtModule? {
-        val dbtProjectFile = file.findChild("dbt_project.yml")
+        val dbtProjectFile = file.findChild(DBT_PROJECT_FILENAME)
 
         return if (file.parent == null) null
         else if (!file.isDirectory) findDbtProjectModule(file.parent)
@@ -49,5 +60,9 @@ class DbtProjectService(val project: Project) {
     fun findDbtProjectModule(psiFile: PsiFile): DbtModule? {
         val vf = psiFile.virtualFile ?: psiFile.originalFile.virtualFile ?: return null
         return findDbtProjectModule(vf)
+    }
+
+    companion object {
+        const val DBT_PROJECT_FILENAME = "dbt_project.yml"
     }
 }

@@ -1,9 +1,9 @@
 package com.getaround.pycharm.dbt.completion
 
 import com.getaround.pycharm.dbt.DbtJinja2Function
-import com.getaround.pycharm.dbt.DbtJinja2Functions
 import com.getaround.pycharm.dbt.completion.DbtJinja2FunctionParameterUtil.countParameters
 import com.getaround.pycharm.dbt.completion.DbtJinja2FunctionParameterUtil.selectedParameterIndex
+import com.getaround.pycharm.dbt.services.DbtProjectService
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext
@@ -12,6 +12,7 @@ import com.intellij.lang.parameterInfo.ParameterInfoHandler
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
+import com.intellij.openapi.components.service
 import com.intellij.psi.PsiFile
 import com.jetbrains.jinja2.tags.Jinja2FunctionCall
 import com.jetbrains.rd.util.enumSetOf
@@ -89,8 +90,9 @@ class DbtJinja2FunctionParameterInfoHandler : ParameterInfoHandler<Jinja2Functio
     override fun findElementForParameterInfo(context: CreateParameterInfoContext): Jinja2FunctionCall? {
         val call = findJinja2FunctionCall(context.file, context.offset)
         val callee = call?.callee ?: return null
-        val functionNames = DbtJinja2Functions.BUILTIN_FUNCTION_NAMES
-        context.itemsToShow = functionNames.filter { it.name == callee.text }.toTypedArray()
+        val dbtProjectModule = context.project.service<DbtProjectService>().findDbtProjectModule(context.file)
+        val functions = dbtProjectModule?.findAllDbtFunctions()
+        context.itemsToShow = functions.orEmpty().filter { it.name == callee.text }.toTypedArray()
         return call
     }
 

@@ -1,27 +1,23 @@
 package com.getaround.pycharm.dbt.listeners
 
+import com.getaround.pycharm.dbt.services.DbtProjectService
+import com.intellij.openapi.components.service
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.sql.psi.SqlLanguage
+import com.jetbrains.jinja2.Jinja2Language
+import com.jetbrains.python.templateLanguages.TemplatesService
 
 internal class DbtProjectManagerListener : ProjectManagerListener {
 
     override fun projectOpened(project: Project) {
-//        val mmgr = ModuleManager.getInstance(project)
-//        val projScope = ProjectScope.getProjectScope(project)
-//        val moduleFiles = FilenameIndex.getFilesByName(project, "dbt_project.yml", projScope)
-//        for (moduleFile in moduleFiles) {
-//            val dbtModule = DbtModule(moduleFile)
-//            val modifiableModel = mmgr.modifiableModel
-//            val module = modifiableModel.newNonPersistentModule(
-//                    dbtModule.containingDirectory().name, DbtModuleType.DBT_MODULE)
-//            ApplicationManager.getApplication().runWriteAction {
-//                modifiableModel.commit()
-//            }
-//            val rm = ModuleRootManager.getInstance(module).modifiableModel
-//            rm.addContentEntry(dbtModule.containingDirectory().virtualFile)
-//            ApplicationManager.getApplication().runWriteAction {
-//                rm.commit()
-//            }
-//        }
+        val instance = project.service<DbtProjectService>()
+        instance.findAllDbtModules().forEach {
+            val module = ModuleUtil.findModuleForFile(it.projectYmlFile)
+            val templatesService = TemplatesService.getInstance(module)
+            templatesService.templateLanguage = Jinja2Language.INSTANCE.templateLanguageName
+            templatesService.templateFileTypes = listOf(SqlLanguage.INSTANCE.associatedFileType?.name)
+        }
     }
 }

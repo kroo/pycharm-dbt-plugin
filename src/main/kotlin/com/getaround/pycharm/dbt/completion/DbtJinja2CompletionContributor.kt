@@ -76,8 +76,12 @@ class DbtJinja2CompletionContributor : CompletionContributor() {
                         }
 
                         if (!isFunctionCall) {
-                            resultSet.addAllElements(DbtJinja2Functions.BUILTIN_FUNCTION_NAMES.map {
-                                DbtJinja2FunctionCompletionLookup(it, appendParens = true, autoPopup = true)
+                            resultSet.addAllElements(DbtJinja2Functions.BUILTIN_FUNCTIONS.map {
+                                val appendInnerQuotes = it.name == "ref" || it.name == "var"
+                                DbtJinja2FunctionCompletionLookup(it,
+                                        appendParens = true,
+                                        appendInnerQuotes = appendInnerQuotes,
+                                        autoPopup = true)
                             })
                         }
                     }

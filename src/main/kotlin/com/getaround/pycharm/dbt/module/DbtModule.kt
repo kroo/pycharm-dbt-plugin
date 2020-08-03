@@ -1,5 +1,9 @@
 package com.getaround.pycharm.dbt.module
 
+import com.getaround.pycharm.dbt.DbtJinja2Function
+import com.getaround.pycharm.dbt.DbtJinja2Functions
+import com.getaround.pycharm.dbt.DbtJinja2Macro
+import com.getaround.pycharm.dbt.DbtPsiUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -8,6 +12,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.jinja2.tags.Jinja2MacroTag
 import org.jetbrains.yaml.psi.impl.YAMLFileImpl
 import org.yaml.snakeyaml.Yaml
 
@@ -28,21 +34,29 @@ class DbtModule(val projectYmlFile: PsiFile) {
         }
 
     private val sourcePaths: Collection<VirtualFile>
-        get() {
-            val obj = this.asMap
-            if (obj?.get("source-paths") !is List<*>) return arrayListOf()
-            val sourcePaths = obj["source-paths"] as List<*>
+        get() = getPaths("source-paths")
 
-            return sourcePaths.mapNotNull { containingDirectory.findSubdirectory(it as String)?.virtualFile }
-        }
+    private val macroPaths: Collection<VirtualFile>
+        get() = getPaths("macro-paths")
 
+    private fun getPaths(key: String): List<VirtualFile> {
+        val obj = this.asMap
+        if (obj?.get(key) !is List<*>) return arrayListOf()
+        val sourcePaths = obj[key] as List<*>
+
+        return sourcePaths.mapNotNull { containingDirectory.findSubdirectory(it as String)?.virtualFile }
+    }
+
+    /**
+     * Returns the collection of all schema.yml files found in the project
+     */
     private val allSchemaFiles: List<DbtSchemaFile>
         get() {
             PsiManager.getInstance(projectYmlFile.project)
             val allSchemaFiles = FilenameIndex.getFilesByName(
                     projectYmlFile.project, "schema.yml", GlobalSearchScope.projectScope(projectYmlFile.project))
             return allSchemaFiles
-                    .filter { psiFile -> isChildOf(containingDirectory, psiFile) && psiFile is YAMLFileImpl }
+                    .filter { psiFile -> DbtPsiUtil.isChildOf(containingDirectory, psiFile) && psiFile is YAMLFileImpl }
                     .map { psiFile -> DbtSchemaFile(psiFile as YAMLFileImpl) }
         }
 
@@ -63,6 +77,9 @@ class DbtModule(val projectYmlFile: PsiFile) {
         return results[0]
     }
 
+    /**
+     * Find the list of all dbt model files in this project
+     */
     fun findAllModels(): List<PsiFile> {
         return FilenameIndex
                 .getAllFilesByExt(projectYmlFile.project, "sql")
@@ -131,14 +148,32 @@ class DbtModule(val projectYmlFile: PsiFile) {
         return allSources
     }
 
-    private fun isChildOf(directory: PsiDirectory, file: PsiFile): Boolean {
-        var parent = file.parent
-        while (parent != null) {
-            if (directory == parent) {
-                return true
+    /**
+     * Find all sql files within 'macros' path
+     */
+    fun findAllMacroFiles(): List<PsiFile> {
+        return FilenameIndex
+                .getAllFilesByExt(projectYmlFile.project, "sql")
+                .filter { sqlFile ->
+                    macroPaths.any { sourcePath ->
+                        VfsUtilCore.isAncestor(sourcePath, sqlFile, false)
+                    }
+                }.mapNotNull { PsiManager.getInstance(projectYmlFile.project).findFile(it) }
+    }
+
+    /**
+     * Return a list of all dbt functions
+     */
+    fun findAllDbtFunctions(): List<DbtJinja2Function> {
+        val result = mutableListOf<DbtJinja2Function>()
+        for (macroFile in findAllMacroFiles()) {
+            val macros = PsiTreeUtil.findChildrenOfType(macroFile, Jinja2MacroTag::class.java)
+            for (macro in macros) {
+                result.add(DbtJinja2Macro(macro))
             }
-            parent = parent.parentDirectory
         }
-        return false
+        result.addAll(DbtJinja2Functions.BUILTIN_FUNCTIONS)
+
+        return result
     }
 }
