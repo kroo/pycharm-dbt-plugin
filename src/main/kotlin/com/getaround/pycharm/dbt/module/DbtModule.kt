@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
@@ -17,7 +18,12 @@ import com.jetbrains.jinja2.tags.Jinja2MacroTag
 import org.jetbrains.yaml.psi.impl.YAMLFileImpl
 import org.yaml.snakeyaml.Yaml
 
-class DbtModule(val projectYmlFile: PsiFile) {
+class DbtModule(projectYmlFileOrig: PsiFile) {
+    private val projectYmlFileRef = SmartPointerManager
+            .getInstance(projectYmlFileOrig.project)
+            .createSmartPsiElementPointer(projectYmlFileOrig, projectYmlFileOrig)
+    val projectYmlFile: PsiFile get() = projectYmlFileRef.element!!
+
     override fun toString(): String {
         return "DbtModule(${containingDirectory.name})"
     }

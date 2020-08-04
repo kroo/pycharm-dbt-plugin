@@ -20,17 +20,21 @@ class DbtJinja2Macro(
     }
 }
 
+class DbtJinja2BuiltinFunction(name: String, args: List<List<String>>, var documentationLink: String? = null) :
+    DbtJinja2Function(name, args)
+
 object DbtJinja2Functions {
-    val BUILTIN_FUNCTIONS = arrayOf(
-            DbtJinja2Function("ref", listOf(
+    val BUILTIN_FUNCTIONS: Array<DbtJinja2BuiltinFunction> = arrayOf(
+            DbtJinja2BuiltinFunction("ref", listOf(
                     listOf("model_name"),
-                    listOf("package_name", "model_name"))),
-            DbtJinja2Function("source", listOf(
-                    listOf("source_name", "table_name")
-            )),
-            DbtJinja2Function("var", listOf(
+                    listOf("package_name", "model_name")),
+                    "https://docs.getdbt.com/reference/dbt-jinja-functions/ref"),
+            DbtJinja2BuiltinFunction("source", listOf(
+                    listOf("source_name", "table_name")),
+                    "https://docs.getdbt.com/reference/dbt-jinja-functions/source"),
+            DbtJinja2BuiltinFunction("var", listOf(
                     listOf("var_name"),
-                    listOf("var_name", "default")
-            ))
+                    listOf("var_name", "default")),
+                    "https://docs.getdbt.com/reference/dbt-jinja-functions/var")
     )
 }

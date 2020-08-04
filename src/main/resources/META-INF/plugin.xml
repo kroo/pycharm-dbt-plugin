@@ -20,16 +20,18 @@
 
         <annotator language="Jinja2" implementationClass="com.getaround.pycharm.dbt.annotators.RefAnnotator"/>
         <psi.referenceContributor language="DjangoTemplate"
-                                  implementation="com.getaround.pycharm.dbt.references.DbtReferenceContributor" />
+                                  implementation="com.getaround.pycharm.dbt.references.DbtReferenceContributor"/>
         <completion.contributor language="DjangoTemplate"
                                 implementationClass="com.getaround.pycharm.dbt.completion.DbtJinja2CompletionContributor"/>
         <codeInsight.parameterInfo language="DjangoTemplate"
                                    implementationClass="com.getaround.pycharm.dbt.completion.DbtJinja2FunctionParameterInfoHandler"/>
-        <database.parameterPatternProvider implementation="com.getaround.pycharm.dbt.database.DbtPatternProvider" />
+        <database.parameterPatternProvider implementation="com.getaround.pycharm.dbt.database.DbtPatternProvider"/>
+        <documentationProvider implementation="com.getaround.pycharm.dbt.docs.DbtDocumentationProvider" order="first"/>
     </extensions>
 
     <extensions defaultExtensionNs="Pythonid">
-        <templateContextProvider implementation="com.getaround.pycharm.dbt.completion.DbtJinja2TemplateContextProvider" />
+        <templateContextProvider
+                implementation="com.getaround.pycharm.dbt.completion.DbtJinja2TemplateContextProvider"/>
     </extensions>
 
     <projectListeners>

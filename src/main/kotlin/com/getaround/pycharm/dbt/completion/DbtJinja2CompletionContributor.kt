@@ -78,7 +78,7 @@ class DbtJinja2CompletionContributor : CompletionContributor() {
                         if (!isFunctionCall) {
                             resultSet.addAllElements(DbtJinja2Functions.BUILTIN_FUNCTIONS.map {
                                 val appendInnerQuotes = it.name == "ref" || it.name == "var"
-                                DbtJinja2FunctionCompletionLookup(it,
+                                DbtJinja2FunctionCompletionLookup(parameters.position, it,
                                         appendParens = true,
                                         appendInnerQuotes = appendInnerQuotes,
                                         autoPopup = true)

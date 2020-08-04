@@ -2,6 +2,10 @@ package com.getaround.pycharm.dbt.services
 
 import com.getaround.pycharm.dbt.DbtPluginBundle
 import com.getaround.pycharm.dbt.module.DbtModule
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -12,6 +16,7 @@ import kotlin.test.assertEquals
 
 class DbtProjectService(val project: Project) {
     private val modules = HashMap<VirtualFile, DbtModule>()
+    private val notificationGroup = NotificationGroup("DBT Messages", NotificationDisplayType.BALLOON, true)
 
     init {
         println(DbtPluginBundle.message("projectService", project.name))
@@ -60,6 +65,20 @@ class DbtProjectService(val project: Project) {
     fun findDbtProjectModule(psiFile: PsiFile): DbtModule? {
         val vf = psiFile.virtualFile ?: psiFile.originalFile.virtualFile ?: return null
         return findDbtProjectModule(vf)
+    }
+
+    fun notifyInfo(content: String): Notification {
+        val notification = notificationGroup.createNotification(
+                "DBT: $content", NotificationType.INFORMATION)
+        notification.notify(project)
+        return notification
+    }
+
+    fun notifyError(content: String): Notification {
+        val notification = notificationGroup.createNotification(
+                "DBT: $content", NotificationType.ERROR)
+        notification.notify(project)
+        return notification
     }
 
     companion object {

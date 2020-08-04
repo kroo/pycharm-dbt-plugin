@@ -13,7 +13,7 @@ class DbtJinja2TemplateContextProvider : TemplateContextProvider {
         val module = project.findDbtProjectModule(file) ?: return result
 
         for (fn in module.findAllDbtFunctions()) {
-            result.add(DbtJinja2FunctionCompletionLookup(fn,
+            result.add(DbtJinja2FunctionCompletionLookup(file, fn,
                     appendParens = true,
                     autoPopup = true))
         }
