@@ -1,15 +1,15 @@
 package com.getaround.pycharm.dbt.module
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLKeyValue
 import org.jetbrains.yaml.psi.YAMLSequenceItem
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl
 import org.jetbrains.yaml.psi.impl.YAMLDocumentImpl
-import org.jetbrains.yaml.psi.impl.YAMLFileImpl
 import org.jetbrains.yaml.psi.impl.YAMLPlainTextImpl
 import org.jetbrains.yaml.psi.impl.YAMLSequenceImpl
 
-class DbtSchemaFile(private val schemaFile: YAMLFileImpl) {
+class DbtSchemaFile(private val schemaFile: YAMLFile) {
     private val document: YAMLDocumentImpl?
         get() {
             val document = schemaFile.children[0]
