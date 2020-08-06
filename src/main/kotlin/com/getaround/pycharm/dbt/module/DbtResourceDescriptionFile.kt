@@ -3,33 +3,41 @@ package com.getaround.pycharm.dbt.module
 import com.intellij.psi.PsiElement
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLKeyValue
+import org.jetbrains.yaml.psi.YAMLSequence
 import org.jetbrains.yaml.psi.YAMLSequenceItem
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl
 import org.jetbrains.yaml.psi.impl.YAMLDocumentImpl
 import org.jetbrains.yaml.psi.impl.YAMLPlainTextImpl
 import org.jetbrains.yaml.psi.impl.YAMLSequenceImpl
 
-class DbtSchemaFile(private val schemaFile: YAMLFile) {
+class DbtResourceDescriptionFile(private val resourceDescriptionFile: YAMLFile) {
     private val document: YAMLDocumentImpl?
         get() {
-            val document = schemaFile.children[0]
+            val document = resourceDescriptionFile.children[0]
             if (document !is YAMLDocumentImpl) return null
             return document
         }
 
     private val mapping: YAMLBlockMappingImpl?
         get() {
+            val documentChildren = document?.children.orEmpty()
+            if (documentChildren.isEmpty()) return null
             val mapping = document?.children?.get(0)
             if (mapping !is YAMLBlockMappingImpl) return null
             return mapping
         }
 
+    private fun topLevelKey(name: String): YAMLSequenceImpl? {
+        val sources = mapping?.getKeyValueByKey(name)
+        if (sources?.value !is YAMLSequenceImpl) return null
+        return sources.value as YAMLSequenceImpl
+    }
+
     private val sources: YAMLSequenceImpl?
-        get() {
-            val sources = mapping?.getKeyValueByKey("sources")
-            if (sources?.value !is YAMLSequenceImpl) return null
-            return sources.value as YAMLSequenceImpl
-        }
+        get() = topLevelKey("sources")
+
+    private val macros: YAMLSequenceImpl?
+        get() = topLevelKey("macros")
 
     fun getAllSources(): Collection<YAMLSequenceItem> {
         val allSources = ArrayList<YAMLSequenceItem>()
@@ -44,17 +52,20 @@ class DbtSchemaFile(private val schemaFile: YAMLFile) {
         return allSources
     }
 
-    fun getSource(sourceName: String): YAMLSequenceItem? {
-        val items = sources?.items ?: listOf()
-        for (source in items) {
-            for (keyValue in source.keysValues) {
-                if (keyValue.keyText == "name" && keyValue.valueText == sourceName) {
-                    return source
+    private fun getItemWithName(base: YAMLSequence?, name: String): YAMLSequenceItem? {
+        val items = base?.items ?: listOf()
+        for (item in items) {
+            for (keyValue in item.keysValues) {
+                if (keyValue.keyText == "name" && keyValue.valueText == name) {
+                    return item
                 }
             }
         }
         return null
     }
+
+    fun getMacro(macroName: String): YAMLSequenceItem? = getItemWithName(macros, macroName)
+    fun getSource(sourceName: String): YAMLSequenceItem? = getItemWithName(sources, sourceName)
 
     fun getAllSourceTables(sourceName: String): Collection<YAMLPlainTextImpl> {
         val allSources = ArrayList<YAMLPlainTextImpl>()

@@ -18,7 +18,7 @@
         <!--        <moduleService serviceImplementation="com.getaround.pycharm.dbt.services.DbtModuleService" id="DBT_MODULE" />-->
         <!--        <moduleType id="DBT_MODULE" implementationClass="com.getaround.pycharm.dbt.module.DbtModuleType"/>-->
 
-        <annotator language="Jinja2" implementationClass="com.getaround.pycharm.dbt.annotators.RefAnnotator"/>
+        <annotator language="DjangoTemplate" implementationClass="com.getaround.pycharm.dbt.annotators.DbtMacroDocumentationAnnotator"/>
         <psi.referenceContributor language="DjangoTemplate"
                                   implementation="com.getaround.pycharm.dbt.references.DbtReferenceContributor"/>
         <completion.contributor language="DjangoTemplate"
@@ -27,6 +27,21 @@
                                    implementationClass="com.getaround.pycharm.dbt.completion.DbtJinja2FunctionParameterInfoHandler"/>
         <database.parameterPatternProvider implementation="com.getaround.pycharm.dbt.database.DbtPatternProvider"/>
         <documentationProvider implementation="com.getaround.pycharm.dbt.docs.DbtDocumentationProvider" order="first"/>
+        <codeInsight.lineMarkerProvider language="Jinja2"
+                                        implementationClass="com.getaround.pycharm.dbt.docs.DbtJinja2MacroLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="yaml"
+                                        implementationClass="com.getaround.pycharm.dbt.docs.DbtYamlMacroLineMarkerProvider"/>
+
+        <intentionAction>
+            <className>com.getaround.pycharm.dbt.actions.DbtDocumentMacroAction</className>
+            <category>Dbt</category>
+        </intentionAction>
+
+        <intentionAction>
+            <className>com.getaround.pycharm.dbt.actions.DbtDocumentMacroParameterAction</className>
+            <category>Dbt</category>
+        </intentionAction>
+
     </extensions>
 
     <extensions defaultExtensionNs="Pythonid">

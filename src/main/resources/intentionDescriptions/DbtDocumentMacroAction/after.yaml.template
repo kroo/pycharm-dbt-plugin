@@ -1,0 +1,5 @@
+version: 2
+
+macros:
+  - name: get_close_month
+    description:

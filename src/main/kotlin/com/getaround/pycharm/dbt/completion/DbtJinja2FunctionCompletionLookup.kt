@@ -26,22 +26,19 @@ class DbtJinja2FunctionCompletionLookup(
     private val autoPopup: Boolean,
     private val appendInnerQuotes: Boolean = false
 ) : LookupElement() {
-    override fun getLookupString(): String {
-        return function.name
-    }
+    override fun getLookupString(): String = function.name
 
     override fun getPsiElement(): PsiElement? {
-        return if (function is DbtJinja2Macro) {
-            function.element
-        } else if (function is DbtJinja2BuiltinFunction) {
-            DbtJinja2BuiltinFunctionFakePsiElement(
+        return when (function) {
+            is DbtJinja2Macro -> function.element
+            is DbtJinja2BuiltinFunction ->
+                DbtJinja2BuiltinFunctionFakePsiElement(
                     resolveToPythonSource(function.name) ?: origElement, function)
-        } else {
-            null
+            else -> null
         }
     }
 
-    fun resolveToPythonSource(name: String): PsiElement? {
+    private fun resolveToPythonSource(name: String): PsiElement? {
         val baseQn = QualifiedName.fromDottedString("dbt.context.base")
         val psiFacade = PyPsiFacade.getInstance(origElement.project)
         val context = psiFacade.createResolveContextFromFoothold(origElement.parent)

@@ -21,9 +21,10 @@ import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.pythonSdk
 
 class UpdateDBTVersionAction(
-        val project: Project,
-        val callback: (p: PyPackage?) -> Unit = {})
-    : AnAction(actionText) {
+    val project: Project,
+    val callback: (p: PyPackage?) -> Unit = {}
+) :
+    AnAction(actionText) {
 
     companion object {
         val DBT_PYPACKAGE_NAME = "dbt"
@@ -92,5 +93,4 @@ class UpdateDBTVersionAction(
             }
         })
     }
-
 }

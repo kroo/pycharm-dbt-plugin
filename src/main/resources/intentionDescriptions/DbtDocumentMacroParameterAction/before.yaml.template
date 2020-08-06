@@ -1,0 +1,5 @@
+version: 2
+
+macros:
+  - name: close_period_start
+    description: "Get the start of the current close period"

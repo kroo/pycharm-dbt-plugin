@@ -1,6 +1,5 @@
 package com.getaround.pycharm.dbt.docs
 
-import com.getaround.pycharm.dbt.DbtJinja2Function
 import com.getaround.pycharm.dbt.completion.DbtJinja2BuiltinFunctionFakePsiElement
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.psi.PsiElement
@@ -22,20 +21,4 @@ class DbtDocumentationProvider : DocumentationProvider {
         }
         return null
     }
-
-    override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?): String? {
-        if (element is DbtJinja2Function) {
-            return "Some text!"
-        }
-        return null
-    }
 }
-
-class DbtDocumentationBuilder(
-    element: PsiElement,
-    originalElement: PsiElement
-) :
-    PyDocumentationBuilder(
-        element,
-        originalElement
-)

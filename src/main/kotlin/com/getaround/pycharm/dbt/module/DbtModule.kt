@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.extensions.python.toPsi
 import com.jetbrains.jinja2.tags.Jinja2MacroTag
 import org.jetbrains.yaml.psi.YAMLFile
+import org.jetbrains.yaml.psi.YAMLSequenceItem
 import org.yaml.snakeyaml.Yaml
 
 class DbtModule(projectYmlFileOrig: PsiFile) {
@@ -32,15 +33,6 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
 
     private val project = projectYmlFile.project
     private val containingDirectory: PsiDirectory get() = projectYmlFile.containingDirectory
-
-    /**
-     * Get the name of the project
-     */
-    val projectName: String?
-        get() {
-            val obj = this.asMap
-            return obj?.get("name") as String?
-        }
 
     private val sourcePaths: Collection<VirtualFile>
         get() = getPaths("source-paths")
@@ -68,7 +60,8 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
     /**
      * Returns the collection of all schema.yml files found in the project
      */
-    private fun allResourcePropertyFiles(resourceType: ResourceType = ResourceType.MODELS): List<DbtSchemaFile> {
+    private fun findAllResourcePropertyFiles(resourceType: ResourceType = ResourceType.MODELS):
+            List<DbtResourceDescriptionFile> {
         PsiManager.getInstance(project)
         val allSchemaFiles = FilenameIndex.getAllFilesByExt(
                 project, "yml", GlobalSearchScope.projectScope(project))
@@ -84,7 +77,7 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
                         VfsUtilCore.isAncestor(sp, yFl, false)
                     }
                 }
-                .map { DbtSchemaFile(it.toPsi(project) as YAMLFile) }.toList()
+                .map { DbtResourceDescriptionFile(it.toPsi(project) as YAMLFile) }.toList()
     }
 
     /**
@@ -124,7 +117,7 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
      * @param tableName: The second argument to source(), the name of the source table
      */
     fun findSourceTable(sourceName: String, tableName: String): PsiElement? {
-        for (schemaFile in this.allResourcePropertyFiles()) {
+        for (schemaFile in this.findAllResourcePropertyFiles()) {
             val sourceTable = schemaFile.getSourceTable(sourceName, tableName)
             if (sourceTable != null) {
                 return sourceTable
@@ -138,7 +131,7 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
      */
     fun findAllSourceTables(sourceName: String): Set<PsiElement> {
         val allTables = HashSet<PsiElement>()
-        for (schemaFile in this.allResourcePropertyFiles(ResourceType.SOURCES)) {
+        for (schemaFile in this.findAllResourcePropertyFiles(ResourceType.SOURCES)) {
             allTables.addAll(schemaFile.getAllSourceTables(sourceName))
         }
         return allTables
@@ -150,7 +143,7 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
      * @param sourceName: The first argument to source(), the name of the source schema
      */
     fun findSourceSchema(sourceName: String): PsiElement? {
-        for (schemaFile in this.allResourcePropertyFiles(ResourceType.SOURCES)) {
+        for (schemaFile in this.findAllResourcePropertyFiles(ResourceType.SOURCES)) {
             val sourceSchema = schemaFile.getSource(sourceName)
             if (sourceSchema != null) {
                 val nameKey = sourceSchema.keysValues.filter { yamlKeyValue -> yamlKeyValue.keyText == "name" }
@@ -165,7 +158,7 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
      */
     fun findAllSourceSchemas(): Set<PsiElement> {
         val allSources = HashSet<PsiElement>()
-        for (schemaFile in this.allResourcePropertyFiles(ResourceType.SOURCES)) {
+        for (schemaFile in this.findAllResourcePropertyFiles(ResourceType.SOURCES)) {
             for (sourceSchema in schemaFile.getAllSources()) {
                 val nameKey = sourceSchema.keysValues.filter { yamlKeyValue -> yamlKeyValue.keyText == "name" }
                 val element = nameKey.first()?.value
@@ -178,7 +171,7 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
     /**
      * Find all sql files within 'macros' path
      */
-    fun findAllMacroFiles(): List<PsiFile> {
+    private fun findAllMacroFiles(): List<PsiFile> {
         return FilenameIndex
                 .getAllFilesByExt(project, "sql")
                 .filter { sqlFile ->
@@ -186,6 +179,21 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
                         VfsUtilCore.isAncestor(sourcePath, sqlFile, false)
                     }
                 }.mapNotNull { PsiManager.getInstance(project).findFile(it) }
+    }
+
+    /**
+     * Find a macro definition
+     */
+    fun findMacro(name: String): DbtJinja2Macro? {
+        for (macroFile in findAllMacroFiles()) {
+            val macros = PsiTreeUtil.findChildrenOfType(macroFile, Jinja2MacroTag::class.java)
+            for (macro in macros) {
+                if (macro.nameElement?.name == name) {
+                    return DbtJinja2Macro(macro)
+                }
+            }
+        }
+        return null
     }
 
     /**
@@ -202,5 +210,19 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
         result.addAll(DbtJinja2Functions.BUILTIN_FUNCTIONS)
 
         return result
+    }
+
+    /**
+     * Find the resource property configuration for a macro
+     */
+    fun findMacroProperties(macroName: String): YAMLSequenceItem? {
+        for (schemaFile in this.findAllResourcePropertyFiles(ResourceType.MACROS)) {
+            val macroProperty = schemaFile.getMacro(macroName)
+
+            if (macroProperty != null) {
+                return macroProperty
+            }
+        }
+        return null
     }
 }
