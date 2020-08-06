@@ -19,6 +19,8 @@ import com.jetbrains.jinja2.Jinja2Language
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
+import com.jetbrains.python.packaging.PyPIPackageUtil
+import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -127,22 +129,22 @@ internal class DbtProjectManagerListener : ProjectManagerListener {
         val forceInstallFramework = false
         val frameworkName = "dbt"
         val packageManager = PyPackageManager.getInstance(sdk)
-
-        // From { com.jetbrains.python.newProject.PythonProjectGenerator }
+        val dbtProjectService = project.service<DbtProjectService>()
 
         // Modal is used because it is insane to create project when framework is not installed
         ProgressManager.getInstance().run(object : Task.Modal(
                 project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
             override fun run(indicator: ProgressIndicator) {
-                var installed = false
+                var pyPackage: PyPackage? = null
                 if (!forceInstallFramework) {
                     // First check if we need to do it
                     indicator.text = PyBundle.message(
                             "python.install.framework.checking.is.installed", frameworkName)
                     val packages = PyPackageUtil.refreshAndGetPackagesModally(sdk)
-                    installed = PyPsiPackageUtil.findPackage(packages, requirement) != null
+                    pyPackage = PyPsiPackageUtil.findPackage(packages, requirement)
                 }
-                if (!installed) {
+
+                if (pyPackage == null) {
                     indicator.text = PyBundle.message(
                             "python.install.framework.installing", frameworkName)
                     try {
@@ -162,6 +164,18 @@ internal class DbtProjectManagerListener : ProjectManagerListener {
                                             frameworkName),
                                     errorDescription)
                         }
+                    }
+                } else {
+                    val latestVersion = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(project, frameworkName)
+
+                    if (latestVersion != null && pyPackage.version != latestVersion) {
+                        val notifyInfo = dbtProjectService
+                                .notifyInfo("DBT library out of date " +
+                                        "(current = ${pyPackage.version}, latest = $latestVersion)")
+                        val updateDbtVersion = UpdateDBTVersionAction(project) {
+                            notifyInfo.hideBalloon()
+                        }
+                        notifyInfo.addAction(updateDbtVersion)
                     }
                 }
             }
