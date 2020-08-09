@@ -1,6 +1,9 @@
 package com.getaround.pycharm.dbt.listeners
 
+import com.getaround.pycharm.dbt.actions.ConfigureProjectInterpreterAction
+import com.getaround.pycharm.dbt.actions.UpdateDBTVersionAction
 import com.getaround.pycharm.dbt.services.DbtProjectService
+import com.getaround.pycharm.dbt.services.DbtTypeService
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -43,6 +46,8 @@ internal class DbtProjectManagerListener : ProjectManagerListener {
         // ensure dbt is installed in the python environment
         if (containsDbtProjects) {
             ensureDbtInstalled(project, projectService)
+
+            project.service<DbtTypeService>().collectDbtContexts()
         }
     }
 

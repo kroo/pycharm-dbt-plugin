@@ -1,8 +1,10 @@
 package com.getaround.pycharm.dbt.module
 
+import com.getaround.pycharm.dbt.DbtJinja2BuiltinFunction
 import com.getaround.pycharm.dbt.DbtJinja2Function
-import com.getaround.pycharm.dbt.DbtJinja2Functions
 import com.getaround.pycharm.dbt.DbtJinja2Macro
+import com.getaround.pycharm.dbt.services.DbtTypeService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -207,7 +209,9 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
                 result.add(DbtJinja2Macro(macro))
             }
         }
-        result.addAll(DbtJinja2Functions.BUILTIN_FUNCTIONS)
+
+        result.addAll(project.service<DbtTypeService>().builtinFunctions.map { DbtJinja2BuiltinFunction(it) })
+//        result.addAll(DbtJinja2Functions.BUILTIN_FUNCTIONS)
 
         return result
     }

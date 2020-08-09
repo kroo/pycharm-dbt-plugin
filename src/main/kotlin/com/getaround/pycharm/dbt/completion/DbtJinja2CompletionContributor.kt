@@ -1,7 +1,8 @@
 package com.getaround.pycharm.dbt.completion
 
-import com.getaround.pycharm.dbt.DbtJinja2Functions
+import com.getaround.pycharm.dbt.DbtJinja2BuiltinFunction
 import com.getaround.pycharm.dbt.services.DbtProjectService
+import com.getaround.pycharm.dbt.services.DbtTypeService
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
@@ -21,9 +22,9 @@ class DbtJinja2CompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(ID),
                 object : CompletionProvider<CompletionParameters?>() {
                     override fun addCompletions(
-                        parameters: CompletionParameters,
-                        context: ProcessingContext,
-                        resultSet: CompletionResultSet
+                            parameters: CompletionParameters,
+                            context: ProcessingContext,
+                            resultSet: CompletionResultSet
                     ) {
 
                         val projectService = parameters.position.project.service<DbtProjectService>()
@@ -76,9 +77,12 @@ class DbtJinja2CompletionContributor : CompletionContributor() {
                         }
 
                         if (!isFunctionCall) {
-                            resultSet.addAllElements(DbtJinja2Functions.BUILTIN_FUNCTIONS.map {
+                            val typeService = parameters.position.project.service<DbtTypeService>()
+                            resultSet.addAllElements(typeService.builtinFunctions.map {
                                 val appendInnerQuotes = it.name == "ref" || it.name == "var"
-                                DbtJinja2FunctionCompletionLookup(parameters.position, it,
+                                DbtJinja2FunctionCompletionLookup(
+                                        parameters.position,
+                                        DbtJinja2BuiltinFunction(it),
                                         appendParens = true,
                                         appendInnerQuotes = appendInnerQuotes,
                                         autoPopup = true)

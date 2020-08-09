@@ -1,4 +1,4 @@
-package com.getaround.pycharm.dbt.listeners
+package com.getaround.pycharm.dbt.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent

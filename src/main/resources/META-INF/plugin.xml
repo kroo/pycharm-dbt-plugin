@@ -14,11 +14,13 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.getaround.pycharm.dbt.services.DbtApplicationService"/>
         <projectService serviceImplementation="com.getaround.pycharm.dbt.services.DbtProjectService"/>
+        <projectService serviceImplementation="com.getaround.pycharm.dbt.services.DbtTypeService"/>
 
         <!--        <moduleService serviceImplementation="com.getaround.pycharm.dbt.services.DbtModuleService" id="DBT_MODULE" />-->
         <!--        <moduleType id="DBT_MODULE" implementationClass="com.getaround.pycharm.dbt.module.DbtModuleType"/>-->
 
-        <annotator language="DjangoTemplate" implementationClass="com.getaround.pycharm.dbt.annotators.DbtMacroDocumentationAnnotator"/>
+        <annotator language="DjangoTemplate"
+                   implementationClass="com.getaround.pycharm.dbt.annotators.DbtMacroDocumentationAnnotator"/>
         <psi.referenceContributor language="DjangoTemplate"
                                   implementation="com.getaround.pycharm.dbt.references.DbtReferenceContributor"/>
         <completion.contributor language="DjangoTemplate"

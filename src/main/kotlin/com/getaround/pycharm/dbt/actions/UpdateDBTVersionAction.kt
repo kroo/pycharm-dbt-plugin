@@ -1,4 +1,4 @@
-package com.getaround.pycharm.dbt.listeners
+package com.getaround.pycharm.dbt.actions
 
 import com.getaround.pycharm.dbt.services.DbtProjectService
 import com.intellij.execution.ExecutionException
