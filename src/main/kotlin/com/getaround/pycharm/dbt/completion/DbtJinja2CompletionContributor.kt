@@ -19,77 +19,67 @@ import com.jetbrains.jinja2.tags.Jinja2FunctionCall
 
 class DbtJinja2CompletionContributor : CompletionContributor() {
     init {
-        extend(CompletionType.BASIC, PlatformPatterns.psiElement(ID),
-                object : CompletionProvider<CompletionParameters?>() {
-                    override fun addCompletions(
-                            parameters: CompletionParameters,
-                            context: ProcessingContext,
-                            resultSet: CompletionResultSet
-                    ) {
+        extend(CompletionType.BASIC, PlatformPatterns.psiElement(ID), DbtJinja2CompletionProvider())
+    }
+}
 
-                        val projectService = parameters.position.project.service<DbtProjectService>()
-                        val isInsideFunctionCall = parameters.position.parent is DjangoVariableReferenceImpl &&
-                                parameters.position.parent.parent is Jinja2FunctionCall &&
-                                (parameters.position.parent.parent as Jinja2FunctionCall
-                                        ).callee is DjangoVariableReferenceImpl
-                        val isAfterPartialFunctionCall = parameters.position.parent.nextSibling is PsiErrorElement &&
-                                ((parameters.position.parent.nextSibling as PsiErrorElement).errorDescription
-                                        == "Closing parenthesis expected")
-                        val isFunctionCall = isInsideFunctionCall || isAfterPartialFunctionCall
+class DbtJinja2CompletionProvider : CompletionProvider<CompletionParameters?>() {
+    override fun addCompletions(
+            parameters: CompletionParameters,
+            context: ProcessingContext,
+            resultSet: CompletionResultSet
+    ) {
 
-                        val outerFunctionCallRef = when {
-                            isInsideFunctionCall ->
-                                ((parameters.position.parent.parent as Jinja2FunctionCall).callee
-                                        as DjangoVariableReferenceImpl)
-                            isAfterPartialFunctionCall ->
-                                (parameters.position.parent.prevSibling.prevSibling) as DjangoVariableReferenceImpl
-                            else -> null
-                        }
+        val projectService = parameters.position.project.service<DbtProjectService>()
+        val isInsideFunctionCall = parameters.position.parent is DjangoVariableReferenceImpl &&
+                parameters.position.parent.parent is Jinja2FunctionCall &&
+                (parameters.position.parent.parent as Jinja2FunctionCall
+                        ).callee is DjangoVariableReferenceImpl
+        val isAfterPartialFunctionCall = parameters.position.parent.nextSibling is PsiErrorElement &&
+                ((parameters.position.parent.nextSibling as PsiErrorElement).errorDescription
+                        == "Closing parenthesis expected")
+        val isFunctionCall = isInsideFunctionCall || isAfterPartialFunctionCall
 
-                        if (isFunctionCall && outerFunctionCallRef?.name == "ref") {
-                            resultSet.addAllElements(projectService
-                                    .findDbtProjectModule(outerFunctionCallRef.containingFile)
-                                    ?.findAllModels()
-                                    ?.map { DbtModelCompletionLookup(it, addQuotes = true) }
-                                    ?: arrayListOf())
-                        }
+        val outerFunctionCallRef = when {
+            isInsideFunctionCall ->
+                ((parameters.position.parent.parent as Jinja2FunctionCall).callee
+                        as DjangoVariableReferenceImpl)
+            isAfterPartialFunctionCall ->
+                (parameters.position.parent.prevSibling.prevSibling) as DjangoVariableReferenceImpl
+            else -> null
+        }
 
-                        if (isFunctionCall && outerFunctionCallRef?.name == "source") {
-                            val functionCall = outerFunctionCallRef.parent as Jinja2FunctionCall
-                            val selectedParameterIndex = DbtJinja2FunctionParameterUtil.selectedParameterIndex(
-                                    parameters.position, functionCall)
-                            if (isInsideFunctionCall && selectedParameterIndex == 1) {
-                                val parameter = DbtJinja2FunctionParameterUtil.getParameter(functionCall, 0)
-                                if (parameter is DjangoStringLiteralImpl) {
-                                    resultSet.addAllElements(projectService
-                                            .findDbtProjectModule(outerFunctionCallRef.containingFile)
-                                            ?.findAllSourceTables(parameter.stringValue)
-                                            ?.map { DbtSourceTableCompletionLookup(it, addQuotes = true) }
-                                            ?: arrayListOf())
-                                }
-                            } else {
-                                resultSet.addAllElements(projectService
-                                        .findDbtProjectModule(outerFunctionCallRef.containingFile)
-                                        ?.findAllSourceSchemas()
-                                        ?.map { DbtSourceSchemaCompletionLookup(it, addQuotes = true) }
-                                        ?: arrayListOf())
-                            }
-                        }
+        if (isFunctionCall && outerFunctionCallRef?.name == "ref") {
+            resultSet.addAllElements(projectService
+                    .findDbtProjectModule(outerFunctionCallRef.containingFile)
+                    ?.findAllModels()
+                    ?.map { DbtModelCompletionLookup(it, addQuotes = true) }
+                    ?: arrayListOf())
+            resultSet.stopHere()
+        }
 
-                        if (!isFunctionCall) {
-                            val typeService = parameters.position.project.service<DbtTypeService>()
-                            resultSet.addAllElements(typeService.builtinFunctions.map {
-                                val appendInnerQuotes = it.name == "ref" || it.name == "var"
-                                DbtJinja2FunctionCompletionLookup(
-                                        parameters.position,
-                                        DbtJinja2BuiltinFunction(it),
-                                        appendParens = true,
-                                        appendInnerQuotes = appendInnerQuotes,
-                                        autoPopup = true)
-                            })
-                        }
-                    }
+        if (isFunctionCall && outerFunctionCallRef?.name == "source") {
+            val functionCall = outerFunctionCallRef.parent as Jinja2FunctionCall
+            val selectedParameterIndex = DbtJinja2FunctionParameterUtil.selectedParameterIndex(
+                    parameters.position, functionCall)
+            if (isInsideFunctionCall && selectedParameterIndex == 1) {
+                val parameter = DbtJinja2FunctionParameterUtil.getParameter(functionCall, 0)
+                if (parameter is DjangoStringLiteralImpl) {
+                    resultSet.addAllElements(projectService
+                            .findDbtProjectModule(outerFunctionCallRef.containingFile)
+                            ?.findAllSourceTables(parameter.stringValue)
+                            ?.map { DbtSourceTableCompletionLookup(it, addQuotes = true) }
+                            ?: arrayListOf())
+                    resultSet.stopHere()
                 }
-        )
+            } else {
+                resultSet.addAllElements(projectService
+                        .findDbtProjectModule(outerFunctionCallRef.containingFile)
+                        ?.findAllSourceSchemas()
+                        ?.map { DbtSourceSchemaCompletionLookup(it, addQuotes = true, addTrailingComma = true, autoPopup = true) }
+                        ?: arrayListOf())
+                resultSet.stopHere()
+            }
+        }
     }
 }

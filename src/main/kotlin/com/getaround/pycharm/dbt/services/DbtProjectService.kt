@@ -50,7 +50,7 @@ class DbtProjectService(val project: Project) {
     /**
      * Look up the containing dbt project module for a particular file
      */
-    private fun findDbtProjectModule(file: VirtualFile): DbtModule? {
+    fun findDbtProjectModule(file: VirtualFile): DbtModule? {
         val dbtProjectFile = file.findChild(DBT_PROJECT_FILENAME)
 
         return if (file.parent == null) null

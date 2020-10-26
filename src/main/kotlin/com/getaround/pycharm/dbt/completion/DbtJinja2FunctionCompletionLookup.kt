@@ -19,12 +19,13 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyPsiFacade
 import javax.swing.Icon
 
+
 class DbtJinja2FunctionCompletionLookup(
-    private val origElement: PsiElement,
-    private val function: DbtJinja2Function,
-    private val appendParens: Boolean,
-    private val autoPopup: Boolean,
-    private val appendInnerQuotes: Boolean = false
+        private val origElement: PsiElement,
+        private val function: DbtJinja2Function,
+        private val appendParens: Boolean,
+        private val autoPopup: Boolean,
+        private val appendInnerQuotes: Boolean = false
 ) : LookupElement() {
     override fun getLookupString(): String = function.name
 
@@ -32,24 +33,32 @@ class DbtJinja2FunctionCompletionLookup(
         return when (function) {
             is DbtJinja2Macro -> function.element
             is DbtJinja2BuiltinFunction ->
-                DbtJinja2BuiltinFunctionFakePsiElement(
-                    resolveToPythonSource(function.name) ?: origElement, function)
+                DbtJinja2BuiltinFunctionFakePsiElementFactory.create(
+                        resolveToPythonSource(function.name) ?: origElement, function)
             else -> null
         }
     }
 
     private fun resolveToPythonSource(name: String): PsiElement? {
-        val baseQn = QualifiedName.fromDottedString("dbt.context.base")
-        val psiFacade = PyPsiFacade.getInstance(origElement.project)
-        val context = psiFacade.createResolveContextFromFoothold(origElement.parent)
-        val fileElems = psiFacade.resolveQualifiedName(baseQn, context)
-        val fileElem = fileElems.firstOrNull()
-        if (fileElem is PyFile) {
-            val classElem = fileElem.topLevelClasses.firstOrNull { it.name == "BaseContext" }
-            if (classElem is PyClass) {
-                val methodElem = classElem.methods.filter { it.name == name }.firstOrNull()
-                if (methodElem is PyFunction) {
-                    return methodElem
+        val contexts = listOf(
+                Pair("dbt.context.base", "BaseContext"),
+                Pair("dbt.context.target", "TargetContext"),
+                Pair("dbt.context.providers", "ModelContext"),
+                Pair("dbt.context.providers", "MacroContext")
+        )
+        for (context in contexts) {
+            val baseQn = QualifiedName.fromDottedString(context.first)
+            val psiFacade = PyPsiFacade.getInstance(origElement.project)
+            val resolveContext = psiFacade.createResolveContextFromFoothold(origElement.parent)
+            val fileElems = psiFacade.resolveQualifiedName(baseQn, resolveContext)
+            val fileElem = fileElems.firstOrNull()
+            if (fileElem is PyFile) {
+                val classElem = fileElem.topLevelClasses.firstOrNull { it.name == context.second }
+                if (classElem is PyClass) {
+                    val methodElem = classElem.methods.filter { it.name == name }.firstOrNull()
+                    if (methodElem is PyFunction) {
+                        return methodElem
+                    }
                 }
             }
         }
@@ -58,7 +67,13 @@ class DbtJinja2FunctionCompletionLookup(
 
     override fun renderElement(presentation: LookupElementPresentation?) {
         presentation?.itemText = lookupString
-        presentation?.icon = AllIcons.Nodes.Method
+        presentation?.icon = when (function) {
+            is DbtJinja2Macro -> AllIcons.Nodes.Method
+            is DbtJinja2BuiltinFunction -> AllIcons.Nodes.Function
+            else -> null
+        }
+
+
         presentation?.appendTailText("(...)", true)
     }
 
@@ -81,9 +96,10 @@ class DbtJinja2FunctionCompletionLookup(
     }
 }
 
-class DbtJinja2BuiltinFunctionFakePsiElement(
-    element: PsiElement,
-    val function: DbtJinja2BuiltinFunction
+
+class DbtJinja2BuiltinFunctionFakePsiElement internal constructor(
+        element: PsiElement,
+        val function: DbtJinja2BuiltinFunction
 ) :
         FakePsiElement() {
     private val myElement = element
@@ -91,8 +107,8 @@ class DbtJinja2BuiltinFunctionFakePsiElement(
     override fun isPhysical(): Boolean = false
     override fun getParent(): PsiElement = myElement
     override fun getContainingFile(): PsiFile? = null
-    override fun canNavigate(): Boolean = true
-    override fun canNavigateToSource(): Boolean = true
+    override fun canNavigate(): Boolean = false
+    override fun canNavigateToSource(): Boolean = false
     override fun getIcon(open: Boolean): Icon? = PlatformIcons.FUNCTION_ICON
     override fun getName(): String? {
         return function.name
@@ -100,5 +116,19 @@ class DbtJinja2BuiltinFunctionFakePsiElement(
 
     override fun getNavigationElement(): PsiElement {
         return myElement
+    }
+}
+
+
+object DbtJinja2BuiltinFunctionFakePsiElementFactory {
+    private val elements = mutableMapOf<String, DbtJinja2BuiltinFunctionFakePsiElement>()
+    fun create(element: PsiElement, function: DbtJinja2BuiltinFunction): DbtJinja2BuiltinFunctionFakePsiElement? {
+        if (elements.containsKey(function.name)) {
+            return elements[function.name]
+        } else {
+            val newElement = DbtJinja2BuiltinFunctionFakePsiElement(element, function)
+            elements[function.name] = newElement
+            return newElement
+        }
     }
 }

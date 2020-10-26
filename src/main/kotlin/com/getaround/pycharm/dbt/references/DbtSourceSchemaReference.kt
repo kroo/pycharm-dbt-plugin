@@ -24,7 +24,7 @@ class DbtSourceSchemaReference(
         return projectService
                 .findDbtProjectModule(element.containingFile)
                 ?.findAllSourceSchemas()
-                ?.map { DbtSourceSchemaCompletionLookup(it) }
+                ?.map { DbtSourceSchemaCompletionLookup(it, addTrailingComma = true, autoPopup = true) }
                 ?.toTypedArray()
                 ?: arrayOf()
     }

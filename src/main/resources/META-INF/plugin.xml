@@ -24,7 +24,8 @@
         <psi.referenceContributor language="DjangoTemplate"
                                   implementation="com.getaround.pycharm.dbt.references.DbtReferenceContributor"/>
         <completion.contributor language="DjangoTemplate"
-                                implementationClass="com.getaround.pycharm.dbt.completion.DbtJinja2CompletionContributor"/>
+                                implementationClass="com.getaround.pycharm.dbt.completion.DbtJinja2CompletionContributor"
+                                order="first"/>
         <codeInsight.parameterInfo language="DjangoTemplate"
                                    implementationClass="com.getaround.pycharm.dbt.completion.DbtJinja2FunctionParameterInfoHandler"/>
         <database.parameterPatternProvider implementation="com.getaround.pycharm.dbt.database.DbtPatternProvider"/>
@@ -33,6 +34,10 @@
                                         implementationClass="com.getaround.pycharm.dbt.docs.DbtJinja2MacroLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="yaml"
                                         implementationClass="com.getaround.pycharm.dbt.docs.DbtYamlMacroLineMarkerProvider"/>
+
+        <configurationType implementation="com.getaround.pycharm.dbt.run.DbtRunConfigurationType" />
+        <runConfigurationProducer implementation="com.getaround.pycharm.dbt.run.DbtRunConfigurationProducer" />
+
 
         <intentionAction>
             <className>com.getaround.pycharm.dbt.actions.DbtDocumentMacroAction</className>

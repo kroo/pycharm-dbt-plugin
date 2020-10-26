@@ -5,6 +5,7 @@ import com.getaround.pycharm.dbt.DbtJinja2Function
 import com.getaround.pycharm.dbt.DbtJinja2Macro
 import com.getaround.pycharm.dbt.services.DbtTypeService
 import com.intellij.openapi.components.service
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -34,7 +35,7 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
     val projectYmlFile: PsiFile get() = projectYmlFileRef.element!!
 
     private val project = projectYmlFile.project
-    private val containingDirectory: PsiDirectory get() = projectYmlFile.containingDirectory
+    val projectRoot: PsiDirectory get() = projectYmlFile.containingDirectory
 
     private val sourcePaths: Collection<VirtualFile>
         get() = getPaths("source-paths")
@@ -51,12 +52,15 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
     private val macroPaths: Collection<VirtualFile>
         get() = getPaths("macro-paths")
 
+    private val testPaths: Collection<VirtualFile>
+        get() = getPaths("test-paths")
+
     private fun getPaths(key: String): List<VirtualFile> {
         val obj = this.asMap
         if (obj?.get(key) !is List<*>) return arrayListOf()
         val sourcePaths = obj[key] as List<*>
 
-        return sourcePaths.mapNotNull { containingDirectory.findSubdirectory(it as String)?.virtualFile }
+        return sourcePaths.mapNotNull { projectRoot.findSubdirectory(it as String)?.virtualFile }
     }
 
     /**
@@ -211,7 +215,6 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
         }
 
         result.addAll(project.service<DbtTypeService>().builtinFunctions.map { DbtJinja2BuiltinFunction(it) })
-//        result.addAll(DbtJinja2Functions.BUILTIN_FUNCTIONS)
 
         return result
     }
@@ -228,5 +231,28 @@ class DbtModule(projectYmlFileOrig: PsiFile) {
             }
         }
         return null
+    }
+
+    /**
+     * Returns true if the specified file is contained within any of the source-paths
+     */
+    fun isModelFile(containingFile: VirtualFile?): Boolean {
+        if (containingFile?.extension != "sql") return false
+        for (modelRoot in sourcePaths) {
+            if (VfsUtil.isAncestor(modelRoot, containingFile, false)) {
+                return true
+            }
+        }
+        return false
+    }
+
+    fun isTestFile(containingFile: VirtualFile?): Boolean {
+        if (containingFile?.extension != "sql") return false
+        for (modelRoot in testPaths) {
+            if (VfsUtil.isAncestor(modelRoot, containingFile, false)) {
+                return true
+            }
+        }
+        return false
     }
 }
